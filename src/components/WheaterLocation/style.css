@@ -1,0 +1,14 @@
+.wheaterLocationCont{
+    margin: 30px;
+    width: 400px;
+    padding: 15px;
+    font-family: 'Reboto',sans-serif;
+    box-shadow: 10px 16px 42px -12px rgba(0,0,0,0.75);
+}
+
+.locationCont{
+    width: 100%;
+    height: 50px;
+    text-align: left;
+    color: #888;
+}

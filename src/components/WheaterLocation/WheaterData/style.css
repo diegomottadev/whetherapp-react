@@ -1,0 +1,41 @@
+.wheaterDataCont{
+    background: rgb(200,200,200,0.5);
+    width: 400px;
+    height: 100px;
+    line-height: 100px;
+    border-radius: 5px;
+}
+
+.wheaterExtraInfoCont{
+    width: 40%;
+    display: inline-block;
+    line-height: 28px;
+    text-align: center;
+}
+
+.wheaterTemperatureCont{
+    width: 60%;
+    display: inline-block;
+    color: #333,
+}
+.temperature{
+    font-size: 30px ;
+    font-weight: bold;
+    padding-left: 20px;
+    color: #333;
+}
+.wicon{
+    color: red;
+}
+
+.temperatureType{
+    font-weight: bold;
+    color: #666;
+}
+
+.extraInfoData{
+    display: block;
+    color: #1535C5;
+    font-size: 16px;
+    font-weight: bold;
+}
