@@ -1,7 +1,6 @@
-import React,{Component} from 'react';
+import React from 'react';
 import WheaterTemperature from './WheaterTemperature';
 import WheaterExtraData from './WheaterExtraData';
-import {CLOUD,CLOUDY} from './../../../constants/wheaters';
 import './style.css';
 import { PropTypes } from 'prop-types';
 

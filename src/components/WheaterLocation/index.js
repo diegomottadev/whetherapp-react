@@ -2,61 +2,41 @@ import React,{Component} from 'react';
 import Location from './Location';
 import WheaterData from './WheaterData';
 import './style.css';
-import { SNOW, SUN } from '../../constants/wheaters';
+import transformWheater from '../../services/transformWheater';
+import { CircularProgress } from 'material-ui';
+import PropTypes from 'prop-types'; // ES6
 
-const location= 'Buenos Aires,ar';
+
+
 const api_key = '76c4a06e90c01a93ff185c8dadd7ec13';
-const api_wheater = `http://api.openweathermap.org/data/2.5/weather?q=${location}&appid=${api_key}`
-//const api_wheater = 'http://api.openweathermap.org/data/2.5/weather?q=Buenos%20Aires,ar&appid=76c4a06e90c01a93ff185c8dadd7ec13'
- const data1 ={
-    temperature: 20,
-    wheaterState: SNOW,
-    humidity: 10,
-    wind: '10 m/s'
-}
-
+const api_url = 'http://api.openweathermap.org/data/2.5/weather';
 
 class WheaterLocation extends Component{
-    constructor(){
+    constructor({city}){
         super();
-        
         this.state = {
-            city:'Buenos Aires',
-            data : data1};
+            city,
+            data : null
+        };
     }
 
-   getWheaterState = wheater =>{
-       return SUN
-   }
-
-    getData = (wheaterData)=>{
-        debugger;
-        const {humidity,temp} = wheaterData.main;
-        const {speed} = wheaterData.wind;
-        const wheaterState = this.getWheaterState(this.wheater)
-
-        const data ={
-            humidity,
-            temperature: temp,
-            wheaterState, 
-            wind: `${speed} m/s `
-        } 
-        return data;
-    }
 
     handleUpdateClick=()=>{
+        const {city} = this.state;
+        
+        const api_wheater = `${api_url}?q=${city}&appid=${api_key}`;
         fetch(api_wheater).then(data =>{
             console.log(data)
-             return data.json();
+            return data.json();
          }).then(wheater_data =>{
             console.log(wheater_data);
-            const data = this.getData(wheater_data);
+            const data = transformWheater(wheater_data);
             this.setState({data})
          })
-        
+    }
 
-        //});
-        //this.setState({data: data0});
+    componentDidMount(){
+        this.handleUpdateClick();
     }
 
     render =()=>
@@ -66,12 +46,13 @@ class WheaterLocation extends Component{
             return (
                 <div className="wheaterLocationCont">
                 <Location city={city}></Location>
-                <WheaterData data={data}></WheaterData>
-                <button onClick={this.handleUpdateClick}>Actualizar</button>
+                {data ? <WheaterData data={data}></WheaterData>: <CircularProgress size={60} thickness={7}></CircularProgress>}
             </div>
             );
 
         }
 }
-
+WheaterLocation.protoTypes ={
+    city: PropTypes.string
+}
 export default WheaterLocation;

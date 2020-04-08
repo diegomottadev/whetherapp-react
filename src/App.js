@@ -1,14 +1,17 @@
 import React from 'react';
-import logo from './logo.svg';
 import './App.css';
-import WheaterLocation from "./components/WheaterLocation"
+import LocationList from "./components/LocationList";
+import MuiThemeProvider from "material-ui/styles/MuiThemeProvider";
+
 function App() {
   return (
+    <MuiThemeProvider>
     <div className="App">
       <header className="App-header">
-        <WheaterLocation></WheaterLocation>
+        <LocationList></LocationList>
       </header>
     </div>
+    </MuiThemeProvider>
   );
 }
 

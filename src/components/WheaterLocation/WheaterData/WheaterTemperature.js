@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React from 'react';
 import WeatherIcons from 'react-weathericons';
 import PropTypes from 'prop-types';
 import {CLOUD,CLOUDY,SUN, SNOW,RAIN,WINDY } from './../../../constants/wheaters';
