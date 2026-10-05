@@ -1,63 +1,35 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import Header from '../Header';
 import WeatherList from '../WeatherList';
 import Footer from '../Footer';
-import { fetchCurrentWeather } from '../../api/openWeather';
-import { toWeather } from '../../utils/weather';
+import { fetchWeather, selectWeatherByCity } from '../../features/weather/weatherSlice';
 import { CITIES } from '../../constants/cities';
-import { CREDIT_LINKS } from '../../constants/links';
-import { STATUS } from '../../constants/status';
+import { FOOTER_LINKS } from '../../constants/links';
 import './App.css';
 
-const LOADING_ENTRY = { status: STATUS.LOADING, weather: null, error: null };
-
-const buildInitialState = () =>
-  CITIES.reduce((state, city) => ({ ...state, [city.id]: LOADING_ENTRY }), {});
-
-// The only component with state. Every other component gets its data through props.
-// weatherByCity has one entry per city id: { status, weather, error }.
+// The only component that talks to the Redux store. Every other component gets props.
 function App() {
-  const [weatherByCity, setWeatherByCity] = useState(buildInitialState);
-  // One AbortController per city id, so a retry cancels the request it replaces.
-  const controllers = useRef({});
+  const dispatch = useDispatch();
+  const weatherByCity = useSelector(selectWeatherByCity);
+  // The last dispatched request per city id. Each one has abort(), from createAsyncThunk.
+  const requests = useRef({});
 
-  const setCityEntry = (cityId, entry) =>
-    setWeatherByCity(previous => ({ ...previous, [cityId]: entry }));
-
-  const loadCity = useCallback(city => {
-    const previous = controllers.current[city.id];
-    if (previous) {
-      previous.abort();
-    }
-    const controller = new AbortController();
-    controllers.current[city.id] = controller;
-
-    setCityEntry(city.id, LOADING_ENTRY);
-    fetchCurrentWeather(city, { signal: controller.signal })
-      .then(data => {
-        // A response can still arrive after abort() if it was already on its way. Drop it.
-        if (controller.signal.aborted) {
-          return;
-        }
-        setCityEntry(city.id, { status: STATUS.SUCCESS, weather: toWeather(data), error: null });
-      })
-      .catch(error => {
-        if (controller.signal.aborted) {
-          return;
-        }
-        // withError only shows the error when the message isn't empty, so always send some text.
-        setCityEntry(city.id, {
-          status: STATUS.ERROR,
-          weather: null,
-          error: error.message || 'Something went wrong.',
-        });
-      });
-  }, []);
+  const loadCity = useCallback(
+    city => {
+      const previous = requests.current[city.id];
+      if (previous) {
+        previous.abort();
+      }
+      requests.current[city.id] = dispatch(fetchWeather(city));
+    },
+    [dispatch]
+  );
 
   useEffect(() => {
     CITIES.forEach(loadCity);
-    const current = controllers.current;
-    return () => Object.values(current).forEach(controller => controller.abort());
+    const current = requests.current;
+    return () => Object.values(current).forEach(request => request.abort());
   }, [loadCity]);
 
   return (
@@ -66,7 +38,7 @@ function App() {
       <main className="App-main">
         <WeatherList cities={CITIES} weatherByCity={weatherByCity} onRetry={loadCity} />
       </main>
-      <Footer links={CREDIT_LINKS} />
+      <Footer links={FOOTER_LINKS} />
     </div>
   );
 }

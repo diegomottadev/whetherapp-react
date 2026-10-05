@@ -7,7 +7,13 @@ const Footer = ({ links }) => (
     <ul className="Footer-links">
       {links.map(link => (
         <li key={link.id}>
-          <ExternalLink href={link.href}>{link.label}</ExternalLink>
+          {link.external ? (
+            <ExternalLink href={link.href}>{link.label}</ExternalLink>
+          ) : (
+            <a className="Footer-link" href={link.href}>
+              {link.label}
+            </a>
+          )}
         </li>
       ))}
     </ul>
@@ -20,6 +26,7 @@ Footer.propTypes = {
       id: PropTypes.string.isRequired,
       label: PropTypes.string.isRequired,
       href: PropTypes.string.isRequired,
+      external: PropTypes.bool.isRequired,
     })
   ).isRequired,
 };

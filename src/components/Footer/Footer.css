@@ -13,3 +13,10 @@
   margin: 0;
   padding: 0;
 }
+
+/* Same 44px touch area as ExternalLink. */
+.Footer-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+}

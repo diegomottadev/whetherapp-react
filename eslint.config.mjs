@@ -25,7 +25,7 @@ export default [
   },
   {
     // Tests build small throwaway components. PropTypes on them would only add noise.
-    files: ['**/*.test.{js,jsx}'],
+    files: ['**/*.test.{js,jsx}', 'src/test-utils.jsx'],
     rules: { 'react/prop-types': 'off' },
   },
   {

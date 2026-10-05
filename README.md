@@ -22,7 +22,7 @@ It shows the current weather in 9 places I've visited, from Cusco to Koh Phangan
 
 ## Stack
 
-React 16.14 with hooks, built with Vite 8 and tested with Vitest. PropTypes checks the props.
+React 16.14 with hooks, built with Vite 8 and tested with Vitest. The state lives in a Redux store, built with Redux Toolkit 2 and React-Redux 8. PropTypes checks the props.
 
 Styles are plain CSS with custom properties and OKLCH colors. The icons come from [Weather Icons](https://erikflowers.github.io/weather-icons/), loaded from a CDN.
 
@@ -81,15 +81,18 @@ The build uses `/whetherapp-react/` as its base path (set in `vite.config.mjs`),
 ## Project structure
 
 ```
+public/explanation-redux/    # standalone page: how Redux works here (English and Spanish)
 src/
 ├── index.jsx / index.css    # entry point; index.css holds the design tokens
+├── store/index.js           # setupStore() and the app's store
+├── features/weather/        # weatherSlice.js: reducer, fetchWeather thunk, selectors
 ├── api/openWeather.js       # fetchCurrentWeather({ lat, lon }, { signal })
 ├── constants/               # places, weather states, stats, request status, footer links
 ├── types/weather.js         # shared PropTypes
 ├── utils/                   # pure helpers: API response to UI data, formatting, getDisplayName
 ├── hocs/                    # withLoading, withError, withEmptyState, withWeatherState
 └── components/
-    ├── App/                 # the only component with state, plus its tests
+    ├── App/                 # the only component that reads the store, plus its tests
     ├── Header/  Footer/  ExternalLink/
     ├── WeatherList/  WeatherCard/  CityName/
     ├── WeatherData/  WeatherSummary/  Temperature/  WeatherIcon/
@@ -99,11 +102,30 @@ src/
 
 A few rules I stuck to:
 
-- `App` owns all the state. Every other component gets props and renders.
+- `App` is the only component that talks to the Redux store. Every other component gets props and renders.
 - Repeated "show this instead of that" logic lives in HOCs. A card is `withError(withLoading(WeatherSkeleton)(WeatherData))`: an error wins, then the skeleton, then the data. The HOCs don't hold state either.
 - Each component lives in its own folder with its `.jsx`, its CSS and an `index.js`, so imports read `import Button from '../Button'`.
 - `api/openWeather.js` is the only file that knows OpenWeatherMap's URL format.
 - Colors, spacing and type sizes are CSS variables in `src/index.css`. Components only use `var(--...)`, so dark mode is 1 media query.
+
+## State with Redux
+
+**Interactive walkthrough:** [How Redux works here](https://diegomottadev.github.io/whetherapp-react/explanation-redux/) shows each step on a diagram, with the action, the store and the real code. It's in English and Spanish (`npm run dev`, then open http://localhost:5173/explanation-redux/). The footer of the app links to it too.
+
+Redux is more than this app needs. I added it on purpose, to practice it on something small, and I followed the [Redux docs](https://redux.js.org/) as they are today: Redux Toolkit, 1 slice per feature, hooks instead of `connect`.
+
+Here's what happens when the page opens:
+
+1. `App` dispatches `fetchWeather(place)` for each of the 9 places.
+2. `fetchWeather` is a `createAsyncThunk`. It sends a `pending` action, calls `api/openWeather.js`, and then sends `fulfilled` with the weather or `rejected` with the error.
+3. The reducer in `weatherSlice.js` saves each answer under the place's id. `App` reads it with `useSelector` and passes it down as props.
+
+2 details keep old answers from showing up:
+
+- Every request saves its `requestId`. If a newer request for the same place has started, the reducer drops the older answer.
+- `dispatch` returns a promise with `abort()`. `App` uses it to cancel a request before retrying, and to cancel everything when it unmounts. A cancelled place goes back to `idle`, so it loads again next time.
+
+Redux DevTools work out of the box: install the browser extension and open the Redux tab.
 
 ## Adding a place, a weather type or a stat
 
@@ -143,21 +165,23 @@ The tests pick up new places and weather states on their own.
 
 ## Tests
 
-52 tests with Vitest and React Testing Library 12 (the last version that works with React 16). They run offline: `fetch` is mocked.
+64 tests with Vitest and React Testing Library 12 (the last version that works with React 16). They run offline: `fetch` is mocked.
 
 ```bash
 npx vitest run
 ```
 
 - `utils/*.test.js` and `api/openWeather.test.js` cover the pure functions and the request: the URL goes over HTTPS with the coordinates, params get encoded, a missing key stops the request, and each HTTP error gets a readable message.
+- `features/weather/weatherSlice.test.js` tests the reducer with hand-made actions, and the thunk with a real store: a newer request wins, and an aborted one goes back to idle.
 - `hocs/hocs.test.jsx` checks that each HOC shows the right thing and passes the right props down.
-- `components/App/App.test.jsx` uses the app like a person would. It waits for the cards, checks that 1 failed place doesn't break the others, clicks "Try again", and unmounts in the middle of a request.
+- `components/App/App.test.jsx` uses the app like a person would, with a real store from `renderWithProviders` (in `src/test-utils.jsx`). It waits for the cards, checks that 1 failed place doesn't break the others, clicks "Try again", and unmounts and mounts again in the middle of a request.
 
 2 of those tests guard bugs from the changelog. I broke each fix on purpose to check that its test fails, and it did.
 
 ## Known issues
 
-- React is still on 16.14 and mounts with `ReactDOM.render`. Moving to React 18 or 19 means switching to `createRoot` and Testing Library 13 or newer.
+- React is still on 16.14 and mounts with `ReactDOM.render`. Moving to React 18 or 19 means switching to `createRoot`, React-Redux 9 and Testing Library 13 or newer.
+- Redux adds about 11 KB (gzipped) to an app with 1 piece of state. That's the price of practicing it here.
 - The API key is public on the live site (see Deploy). There's no backend to hide it.
 - The 2020 code had an API key written in the source. That key is revoked, but it's still in the git history.
 - The icons load from cdnjs. If that CDN is down, the cards show no icon and nothing warns you.
@@ -176,11 +200,12 @@ I came back to this project in 2026 to clean it up and close it out.
 - **The sun was always out.** It could be pouring in Bogotá and the app still showed a sun, because it never looked at the forecast to pick the icon. Now the icon matches the sky.
 - **It could spin forever.** If something went wrong, like a typo in a city name, you got a loading circle that never stopped. Now you get a short message and a button to try again.
 - **The API key was out in the open.** The 2020 key was typed right into the code, on a public repo. It's dead now, and new keys live in a local file that stays out of git.
-- **It got a lot lighter.** The app downloaded a whole component library just to draw 1 spinning circle. With that gone, the browser downloads about 44 KB instead of 148 KB.
+- **It got a lot lighter.** The app downloaded a whole component library just to draw 1 spinning circle. With that gone, the browser downloads about 55 KB instead of 148 KB (and 11 of those are Redux, see below).
 - **The old tools were retired.** The 2020 build tool stopped getting updates years ago and came with 236 known security warnings. The new one has 0 and builds in under a second.
 - **It works at night and on your phone.** It follows your dark mode setting, and the cards stack in 1 column on a small screen. You can also use it with just a keyboard or a screen reader.
 - **It shows places I've actually been.** The 2 sample cities became 9 places from my trips, from Cusco to an island in Thailand.
-- **Now there are tests.** 52 small checks run in about 3 seconds and complain if something breaks. Before, there was 1, and it failed.
+- **The data has a single home.** The weather now lives in a Redux store, the way many bigger React apps keep theirs. Here it's mostly practice.
+- **Now there are tests.** 64 small checks run in about 3 seconds and complain if something breaks. Before, there was 1, and it failed.
 
 **The details**
 
@@ -202,6 +227,7 @@ I came back to this project in 2026 to clean it up and close it out.
 - The API key, URL and response format moved out of a UI component into `api/openWeather.js`.
 - Places, weather types and stats come from config arrays, so adding one is 1 edit (see above).
 - The 2 sample cities became 9 places I've visited. The API gets their coordinates instead of their names.
+- The weather state moved from `App` into a Redux Toolkit slice (`features/weather/weatherSlice.js`). Loading goes through a `createAsyncThunk`, stale answers are dropped by `requestId`, and cancelled requests go back to `idle`.
 - Every file, component and CSS class said "Wheater". It says "Weather" now.
 - Dead code is gone: the service worker, the CRA logo and its unused styles, debug `console.log`s.
 
@@ -217,7 +243,7 @@ I came back to this project in 2026 to clean it up and close it out.
 - Moved from Create React App and Jest to Vite and Vitest.
 - 5 dependencies removed, including `material-ui` (used only for a spinner) and `react-weathericons` (replaced by a 3-line component).
 - `npm audit` went from 236 vulnerabilities to 0. All of them came from build and test tools, so the browser bundle was never affected.
-- Added ESLint, a deploy script and 52 tests (there was 1 test before, and it failed).
+- Added ESLint, a deploy script and 64 tests (there was 1 test before, and it failed).
 
 ### 2020
 

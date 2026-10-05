@@ -13,7 +13,8 @@ const WeatherBody = withError(withLoading(WeatherSkeleton)(WeatherData));
 
 const WeatherCard = ({ city, cityWeather, onRetry }) => {
   const headingId = `city-${city.id}`;
-  const isLoading = cityWeather.status === STATUS.LOADING;
+  // idle shows the skeleton too: the request starts right after the first render.
+  const isLoading = cityWeather.status === STATUS.IDLE || cityWeather.status === STATUS.LOADING;
   return (
     <article className="WeatherCard" aria-labelledby={headingId} aria-busy={isLoading}>
       <CityName id={headingId} name={city.name} country={city.country} />

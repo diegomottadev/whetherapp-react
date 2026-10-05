@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, screen, within } from '@testing-library/react';
 import App from './App';
+import { renderWithProviders } from '../../test-utils';
+import { STATUS } from '../../constants/status';
 import { CITIES } from '../../constants/cities';
 
 const [first, second] = CITIES;
@@ -36,7 +38,7 @@ afterEach(() => {
 
 describe('App', () => {
   test('shows a skeleton per place while loading, then the weather', async () => {
-    render(<App />);
+    renderWithProviders(<App />);
 
     expect(screen.getAllByRole('article')).toHaveLength(CITIES.length);
     expect(within(card(first)).getByRole('status')).toHaveTextContent('Loading the weather');
@@ -55,7 +57,7 @@ describe('App', () => {
   });
 
   test('asks for each place by its coordinates', async () => {
-    render(<App />);
+    renderWithProviders(<App />);
     await within(card(first)).findByText('Cloudy');
 
     const requested = fetch.mock.calls.map(([url]) => placeOf(url));
@@ -66,7 +68,7 @@ describe('App', () => {
     fetch.mockImplementation(url =>
       Promise.resolve(placeOf(url) === second ? errorResponse(404) : okResponse(weatherFor(url)))
     );
-    render(<App />);
+    renderWithProviders(<App />);
 
     const alert = await within(card(second)).findByRole('alert');
     expect(alert).toHaveTextContent("Couldn't find this place.");
@@ -77,7 +79,7 @@ describe('App', () => {
     fetch.mockImplementation(url =>
       Promise.resolve(placeOf(url) === second ? errorResponse(503) : okResponse(weatherFor(url)))
     );
-    render(<App />);
+    renderWithProviders(<App />);
     await within(card(second)).findByRole('alert');
 
     fetch.mockImplementation(url => Promise.resolve(okResponse(weatherFor(url))));
@@ -91,7 +93,7 @@ describe('App', () => {
 
   test('shows the error when the API key is missing', async () => {
     vi.stubEnv('VITE_OPENWEATHER_KEY', '');
-    render(<App />);
+    renderWithProviders(<App />);
 
     expect(await within(card(first)).findByRole('alert')).toHaveTextContent('VITE_OPENWEATHER_KEY');
     expect(fetch).not.toHaveBeenCalled();
@@ -103,7 +105,7 @@ describe('App', () => {
       (url, { signal }) => new Promise(resolve => pending.push({ resolve, signal, body: weatherFor(url) }))
     );
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const { unmount } = render(<App />);
+    const { unmount, store } = renderWithProviders(<App />);
 
     unmount();
     expect(pending).toHaveLength(CITIES.length);
@@ -114,14 +116,34 @@ describe('App', () => {
       pending.forEach(request => request.resolve(okResponse(request.body)));
     });
     expect(consoleError).not.toHaveBeenCalled();
+
+    // Cancelled requests go back to idle, so mounting again starts new requests.
+    const statuses = Object.values(store.getState().weather.byCity).map(entry => entry.status);
+    expect(statuses.every(status => status === STATUS.IDLE)).toBe(true);
   });
 
-  test('has credit links that open in a new tab', () => {
-    render(<App />);
+  test('loads again when it mounts a second time with the same store', async () => {
+    fetch.mockImplementationOnce(() => new Promise(() => {}));
+    const { unmount, store } = renderWithProviders(<App />);
+    unmount();
 
-    const links = within(screen.getByRole('contentinfo')).getAllByRole('link');
-    expect(links).toHaveLength(3);
-    links.forEach(link => {
+    renderWithProviders(<App />, { store });
+
+    expect(await within(card(first)).findByText('Cloudy')).toBeInTheDocument();
+    expect(fetch).toHaveBeenCalledTimes(CITIES.length * 2);
+  });
+
+  test('footer links: external ones open in a new tab, the Redux explanation stays in this tab', () => {
+    renderWithProviders(<App />);
+
+    const footer = within(screen.getByRole('contentinfo'));
+    const explanation = footer.getByRole('link', { name: 'How Redux works here' });
+    expect(explanation).toHaveAttribute('href', '/explanation-redux/');
+    expect(explanation).not.toHaveAttribute('target');
+
+    const external = footer.getAllByRole('link').filter(link => link !== explanation);
+    expect(external).toHaveLength(3);
+    external.forEach(link => {
       expect(link).toHaveAttribute('target', '_blank');
       expect(link).toHaveAttribute('rel', 'noopener noreferrer');
     });

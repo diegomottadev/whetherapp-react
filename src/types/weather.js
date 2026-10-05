@@ -20,4 +20,5 @@ export const cityWeatherPropType = PropTypes.shape({
   status: PropTypes.oneOf(Object.values(STATUS)).isRequired,
   weather: weatherPropType,
   error: PropTypes.string,
+  requestId: PropTypes.string,
 });
