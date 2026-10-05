@@ -1,0 +1,14 @@
+.Header {
+  margin-bottom: var(--space-5);
+}
+
+.Header-title {
+  margin: 0;
+  font-size: var(--step-3);
+  line-height: 1.15;
+}
+
+.Header-subtitle {
+  margin: var(--space-1) 0 0;
+  color: var(--text-muted);
+}

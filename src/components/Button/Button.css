@@ -1,0 +1,16 @@
+.Button {
+  min-height: var(--tap);
+  min-width: var(--tap);
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s var(--ease);
+}
+
+.Button:hover {
+  background: var(--accent-hover);
+}

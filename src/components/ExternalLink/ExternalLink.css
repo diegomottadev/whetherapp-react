@@ -1,0 +1,6 @@
+/* Footer links are short text. min-height makes each one at least 44px tall to tap. */
+.ExternalLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+}

@@ -1,0 +1,16 @@
+.Stat {
+  padding: var(--space-3);
+  background: var(--surface-sunken);
+  border-radius: var(--radius-sm);
+}
+
+.Stat-label {
+  font-size: var(--step--1);
+  color: var(--text-muted);
+}
+
+.Stat-value {
+  margin: 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
