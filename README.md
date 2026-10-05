@@ -188,6 +188,33 @@ npx vitest run
 - ESLint stays on version 9 until `eslint-plugin-react` supports 10.
 - The screenshots are taken by hand (headless Chrome with a mocked API). They won't update on their own when the UI changes.
 
+## Things to build next
+
+If you want to practice on this codebase, learn React/Redux patterns, or take the app further, here is a checklist of ideas organized from quick wins to bigger architecture upgrades:
+
+### Quick wins (UI & features)
+
+- [ ] **Celsius / Fahrenheit toggle:** Add a switch in the header to flip between `°C` and `°F`. Store the preference in Redux or `localStorage`, and update `formatTemperature` in `src/utils/format.js`.
+- [ ] **"Refresh all" button:** Add a button in the header that dispatches `fetchWeather` for all places again without reloading the page.
+- [ ] **More weather stats:** Add "Feels like", pressure, or wind gust to `WEATHER_STATS` in `src/constants/weatherStats.js` and map them in `src/utils/weather.js`.
+- [ ] **"Use my location":** Use `navigator.geolocation` to read the user's coordinates and show a card with their local weather pinned at the top.
+
+### State & interactions
+
+- [ ] **Search and add cities dynamically:** Add an input field that queries the [OpenWeather Geocoding API](https://openweathermap.org/api/geocoding-api) (`/geo/1.0/direct?q={name}`), lets the user pick a city, and appends it to the list.
+- [ ] **Save custom places in `localStorage`:** Let the user reorder or delete cards, and persist their custom city list across browser reloads.
+- [ ] **5-day / 3-hour forecast view:** Click a card to open an expandable section or modal showing the upcoming forecast from OpenWeatherMap's `/data/2.5/forecast` endpoint.
+- [ ] **Auto-refresh timer:** Periodically refresh the data (e.g. every 10 or 15 minutes) when the tab is visible, using `document.visibilityState` to pause when backgrounded.
+
+### Architecture & tooling
+
+- [ ] **Upgrade to React 18 or 19:** Replace `ReactDOM.render` with `createRoot` in `src/index.jsx`, bump to `react-redux` 9 and `@testing-library/react` 14+.
+- [ ] **Migrate to RTK Query:** Replace the manual `createAsyncThunk` and `weatherSlice.js` logic with an RTK Query `createApi` slice for built-in caching, polling, and deduplication.
+- [ ] **Migrate to TypeScript:** Add `tsconfig.json`, convert PropTypes in `src/types/weather.js` into interfaces, and gradually rename `.js`/`.jsx` to `.ts`/`.tsx`.
+- [ ] **Bundle icons locally:** Replace the `cdnjs` font link with local SVG components (or an icon library like `lucide-react`) so cards never fail to display an icon when offline or if the CDN is down.
+- [ ] **GitHub Actions CI:** Add a `.github/workflows/ci.yml` that runs `npm run lint` and `npm test` on pull requests, and deploys automatically when pushing to `master`.
+- [ ] **Backend proxy for the API key:** Deploy a tiny Cloudflare Worker or serverless function to proxy requests to OpenWeatherMap so the API key stays hidden from the client bundle.
+
 ## Changelog
 
 ### 2026 revisit
