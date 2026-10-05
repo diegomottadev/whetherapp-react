@@ -212,7 +212,7 @@ If you want to practice on this codebase, learn React/Redux patterns, or take th
 - [ ] **Migrate to RTK Query:** Replace the manual `createAsyncThunk` and `weatherSlice.js` logic with an RTK Query `createApi` slice for built-in caching, polling, and deduplication.
 - [ ] **Migrate to TypeScript:** Add `tsconfig.json`, convert PropTypes in `src/types/weather.js` into interfaces, and gradually rename `.js`/`.jsx` to `.ts`/`.tsx`.
 - [ ] **Bundle icons locally:** Replace the `cdnjs` font link with local SVG components (or an icon library like `lucide-react`) so cards never fail to display an icon when offline or if the CDN is down.
-- [ ] **GitHub Actions CI:** Add a `.github/workflows/ci.yml` that runs `npm run lint` and `npm test` on pull requests, and deploys automatically when pushing to `master`.
+- [ ] **GitHub Actions CI:** Add a `.github/workflows/ci.yml` that runs `npm run lint` and `npm test` on pull requests, and deploys automatically when pushing to `main`.
 - [ ] **Backend proxy for the API key:** Deploy a tiny Cloudflare Worker or serverless function to proxy requests to OpenWeatherMap so the API key stays hidden from the client bundle.
 
 ## Changelog
