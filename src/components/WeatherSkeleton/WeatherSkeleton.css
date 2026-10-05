@@ -1,0 +1,46 @@
+.WeatherSkeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.WeatherSkeleton-main {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.WeatherSkeleton-extra {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+}
+
+.WeatherSkeleton-block {
+  display: block;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(90deg, var(--skeleton) 25%, var(--skeleton-shine) 50%, var(--skeleton) 75%);
+  background-size: 200% 100%;
+  animation: WeatherSkeleton-shimmer 1.4s linear infinite;
+}
+
+.WeatherSkeleton-icon {
+  width: var(--step-5);
+  height: var(--step-5);
+  border-radius: var(--radius-full);
+}
+
+.WeatherSkeleton-value {
+  width: 7rem;
+  height: var(--step-5);
+}
+
+.WeatherSkeleton-row {
+  height: 4rem;
+}
+
+@keyframes WeatherSkeleton-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}

@@ -1,0 +1,5 @@
+.WeatherIcon {
+  font-size: var(--step-5);
+  line-height: 1;
+  color: var(--icon);
+}
