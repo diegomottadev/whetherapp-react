@@ -1,6 +1,12 @@
-.CityName {
+.CityName-name {
   margin: 0;
   font-size: var(--step-1);
   font-weight: 500;
+  line-height: 1.2;
+}
+
+.CityName-country {
+  margin: var(--space-1) 0 0;
+  font-size: var(--step--1);
   color: var(--text-muted);
 }

@@ -2,34 +2,29 @@ import PropTypes from 'prop-types';
 import CityName from '../CityName';
 import WeatherData from '../WeatherData';
 import WeatherSkeleton from '../WeatherSkeleton';
-import ErrorMessage from '../ErrorMessage';
+import withLoading from '../../hocs/withLoading';
+import withError from '../../hocs/withError';
 import { STATUS } from '../../constants/status';
 import { cityPropType, cityWeatherPropType } from '../../types/weather';
 import './WeatherCard.css';
 
-const renderBody = (cityWeather, onRetry) => {
-  switch (cityWeather.status) {
-    case STATUS.SUCCESS:
-      return <WeatherData weather={cityWeather.weather} />;
-    case STATUS.ERROR:
-      return <ErrorMessage message={cityWeather.error} onRetry={onRetry} />;
-    default:
-      return <WeatherSkeleton />;
-  }
-};
+// withError runs first, so a failed request never reaches the loading check.
+const WeatherBody = withError(withLoading(WeatherSkeleton)(WeatherData));
 
 const WeatherCard = ({ city, cityWeather, onRetry }) => {
   const headingId = `city-${city.id}`;
+  const isLoading = cityWeather.status === STATUS.LOADING;
   return (
-    <article
-      className="WeatherCard"
-      aria-labelledby={headingId}
-      aria-busy={cityWeather.status === STATUS.LOADING}
-    >
-      <CityName id={headingId} name={city.name} />
+    <article className="WeatherCard" aria-labelledby={headingId} aria-busy={isLoading}>
+      <CityName id={headingId} name={city.name} country={city.country} />
       {/* polite: screen readers read the new weather once it loads, without cutting in. */}
       <div className="WeatherCard-body" aria-live="polite">
-        {renderBody(cityWeather, onRetry)}
+        <WeatherBody
+          isLoading={isLoading}
+          error={cityWeather.status === STATUS.ERROR ? cityWeather.error : null}
+          onRetry={onRetry}
+          weather={cityWeather.weather}
+        />
       </div>
     </article>
   );

@@ -4,7 +4,9 @@ import { STATUS } from '../constants/status';
 export const cityPropType = PropTypes.shape({
   id: PropTypes.string.isRequired,
   name: PropTypes.string.isRequired,
-  query: PropTypes.string.isRequired,
+  country: PropTypes.string.isRequired,
+  lat: PropTypes.number.isRequired,
+  lon: PropTypes.number.isRequired,
 });
 
 export const weatherPropType = PropTypes.shape({

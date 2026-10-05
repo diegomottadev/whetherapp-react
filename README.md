@@ -4,17 +4,18 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/dark.png">
-  <img alt="Weather cards for Buenos Aires and Bogotá with temperature, humidity and wind" src="docs/screenshots/light.png">
+  <img alt="Weather cards for 9 places, from Cusco to Koh Phangan, with temperature, humidity and wind" src="docs/screenshots/light.png">
 </picture>
 
 I built this in March and April 2020, while I was learning React. It was my first app that talked to a real API.
 
-It shows the current weather for a few cities, with data from [OpenWeatherMap](https://openweathermap.org/). In 2026 I came back to fix its bugs and close it out (see the changelog).
+It shows the current weather in 9 places I've visited, from Cusco to Koh Phangan, with data from [OpenWeatherMap](https://openweathermap.org/). In 2026 I came back to fix its bugs and close it out (see the changelog).
 
 ## What it does
 
-- Shows 1 card per city with the temperature, a short description, humidity and wind.
-- Loads every city at the same time. If 1 city fails, the others still show their data.
+- Shows 1 card per place with the country, the temperature, a short description, humidity and wind.
+- Loads every place at the same time. If 1 place fails, the others still show their data.
+- Asks for each place by its coordinates. Several are small towns or islands, and a name like "Copacabana" could also mean the beach in Rio.
 - Shows a skeleton while a card loads, and an error with a "Try again" button if the request fails.
 - Picks the icon from the real weather. Rain gets a rain icon, clouds get clouds.
 - Follows your system's light or dark mode. On a phone the cards stack in 1 column.
@@ -82,35 +83,38 @@ The build uses `/whetherapp-react/` as its base path (set in `vite.config.mjs`),
 ```
 src/
 ├── index.jsx / index.css    # entry point; index.css holds the design tokens
-├── api/openWeather.js       # fetchCurrentWeather(query, { signal })
-├── constants/               # cities, weather states, request status, footer links
+├── api/openWeather.js       # fetchCurrentWeather({ lat, lon }, { signal })
+├── constants/               # places, weather states, stats, request status, footer links
 ├── types/weather.js         # shared PropTypes
-├── utils/                   # pure helpers: API response to UI data, number formatting
+├── utils/                   # pure helpers: API response to UI data, formatting, getDisplayName
+├── hocs/                    # withLoading, withError, withEmptyState, withWeatherState
 └── components/
     ├── App/                 # the only component with state, plus its tests
+    ├── Header/  Footer/  ExternalLink/
     ├── WeatherList/  WeatherCard/  CityName/
-    ├── WeatherData/  WeatherTemperature/  WeatherExtraData/  WeatherIcon/
-    ├── WeatherSkeleton/  ErrorMessage/  EmptyState/  Button/
-    └── Footer/  ExternalLink/
+    ├── WeatherData/  WeatherSummary/  Temperature/  WeatherIcon/
+    ├── WeatherStats/  Stat/
+    └── WeatherSkeleton/  ErrorMessage/  EmptyState/  Button/
 ```
 
 A few rules I stuck to:
 
 - `App` owns all the state. Every other component gets props and renders.
+- Repeated "show this instead of that" logic lives in HOCs. A card is `withError(withLoading(WeatherSkeleton)(WeatherData))`: an error wins, then the skeleton, then the data. The HOCs don't hold state either.
 - Each component lives in its own folder with its `.jsx`, its CSS and an `index.js`, so imports read `import Button from '../Button'`.
 - `api/openWeather.js` is the only file that knows OpenWeatherMap's URL format.
 - Colors, spacing and type sizes are CSS variables in `src/index.css`. Components only use `var(--...)`, so dark mode is 1 media query.
 
-## Adding a city or a weather type
+## Adding a place, a weather type or a stat
 
-Both are 1 edit in `src/constants/`.
+Each one is 1 edit in `src/constants/`.
 
-To add a city, add an entry to `src/constants/cities.js`. The `query` uses OpenWeatherMap's "City,country" format, with a 2-letter country code:
+To add a place, add an entry to `src/constants/cities.js` with its coordinates in decimal degrees. I got mine from [OpenStreetMap](https://www.openstreetmap.org/):
 
 ```js
 export const CITIES = [
   // ...
-  { id: 'lima', name: 'Lima', query: 'Lima,pe' },
+  { id: 'lima', name: 'Lima', country: 'Peru', lat: -12.0464, lon: -77.0428 },
 ];
 ```
 
@@ -124,18 +128,30 @@ export const WEATHER_STATES = [
 ];
 ```
 
-The tests pick up new weather states on their own.
+To show another value under the temperature, add an entry to `src/constants/weatherStats.js`. `field` is a key of the weather object that `toWeather` returns:
+
+```js
+export const WEATHER_STATS = [
+  // ...
+  { field: 'feelsLike', label: 'Feels like', format: formatTemperature },
+];
+```
+
+`feelsLike` isn't there yet, so you'd also add `feelsLike: main.feels_like` in `src/utils/weather.js` and import `formatTemperature` at the top.
+
+The tests pick up new places and weather states on their own.
 
 ## Tests
 
-39 tests with Vitest and React Testing Library 12 (the last version that works with React 16). They run offline: `fetch` is mocked.
+52 tests with Vitest and React Testing Library 12 (the last version that works with React 16). They run offline: `fetch` is mocked.
 
 ```bash
 npx vitest run
 ```
 
-- `utils/*.test.js` and `api/openWeather.test.js` cover the pure functions and the request: the URL goes over HTTPS, the city name gets encoded, a missing key stops the request, and each HTTP error gets a readable message.
-- `components/App/App.test.jsx` uses the app like a person would. It waits for the cards, checks that 1 failed city doesn't break the others, clicks "Try again", and unmounts in the middle of a request.
+- `utils/*.test.js` and `api/openWeather.test.js` cover the pure functions and the request: the URL goes over HTTPS with the coordinates, params get encoded, a missing key stops the request, and each HTTP error gets a readable message.
+- `hocs/hocs.test.jsx` checks that each HOC shows the right thing and passes the right props down.
+- `components/App/App.test.jsx` uses the app like a person would. It waits for the cards, checks that 1 failed place doesn't break the others, clicks "Try again", and unmounts in the middle of a request.
 
 2 of those tests guard bugs from the changelog. I broke each fix on purpose to check that its test fails, and it did.
 
@@ -163,7 +179,8 @@ I came back to this project in 2026 to clean it up and close it out.
 - **It got a lot lighter.** The app downloaded a whole component library just to draw 1 spinning circle. With that gone, the browser downloads about 44 KB instead of 148 KB.
 - **The old tools were retired.** The 2020 build tool stopped getting updates years ago and came with 236 known security warnings. The new one has 0 and builds in under a second.
 - **It works at night and on your phone.** It follows your dark mode setting, and the cards stack in 1 column on a small screen. You can also use it with just a keyboard or a screen reader.
-- **Now there are tests.** 39 small checks run in about 3 seconds and complain if something breaks. Before, there was 1, and it failed.
+- **It shows places I've actually been.** The 2 sample cities became 9 places from my trips, from Cusco to an island in Thailand.
+- **Now there are tests.** 52 small checks run in about 3 seconds and complain if something breaks. Before, there was 1, and it failed.
 
 **The details**
 
@@ -180,9 +197,11 @@ I came back to this project in 2026 to clean it up and close it out.
 
 **Structure**
 
-- Each card fetched its own data. Now `App` holds all the state, and the other 13 components only get props.
+- Each card fetched its own data. Now `App` holds all the state, and the other 16 components only get props.
+- 4 HOCs replace the branching inside components: `withLoading`, `withError`, `withEmptyState` and `withWeatherState`.
 - The API key, URL and response format moved out of a UI component into `api/openWeather.js`.
-- Cities and weather types come from config arrays, so adding one is 1 edit (see above).
+- Places, weather types and stats come from config arrays, so adding one is 1 edit (see above).
+- The 2 sample cities became 9 places I've visited. The API gets their coordinates instead of their names.
 - Every file, component and CSS class said "Wheater". It says "Weather" now.
 - Dead code is gone: the service worker, the CRA logo and its unused styles, debug `console.log`s.
 
@@ -198,7 +217,7 @@ I came back to this project in 2026 to clean it up and close it out.
 - Moved from Create React App and Jest to Vite and Vitest.
 - 5 dependencies removed, including `material-ui` (used only for a spinner) and `react-weathericons` (replaced by a 3-line component).
 - `npm audit` went from 236 vulnerabilities to 0. All of them came from build and test tools, so the browser bundle was never affected.
-- Added ESLint, a deploy script and 39 tests (there was 1 test before, and it failed).
+- Added ESLint, a deploy script and 52 tests (there was 1 test before, and it failed).
 
 ### 2020
 

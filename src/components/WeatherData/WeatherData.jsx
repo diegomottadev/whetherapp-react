@@ -1,18 +1,14 @@
-import WeatherTemperature from '../WeatherTemperature';
-import WeatherExtraData from '../WeatherExtraData';
-import { getWeatherState } from '../../utils/weather';
+import WeatherSummary from '../WeatherSummary';
+import WeatherStats from '../WeatherStats';
 import { weatherPropType } from '../../types/weather';
 import './WeatherData.css';
 
-const WeatherData = ({ weather }) => {
-  const { icon, label } = getWeatherState(weather.condition);
-  return (
-    <div className="WeatherData">
-      <WeatherTemperature temperature={weather.temperature} icon={icon} label={label} />
-      <WeatherExtraData humidity={weather.humidity} windSpeed={weather.windSpeed} />
-    </div>
-  );
-};
+const WeatherData = ({ weather }) => (
+  <div className="WeatherData">
+    <WeatherSummary temperature={weather.temperature} condition={weather.condition} />
+    <WeatherStats weather={weather} />
+  </div>
+);
 
 WeatherData.propTypes = {
   weather: weatherPropType.isRequired,

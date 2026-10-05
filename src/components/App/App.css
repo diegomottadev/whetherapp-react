@@ -7,21 +7,6 @@
   padding: var(--space-6) var(--space-4) var(--space-5);
 }
 
-.App-header {
-  margin-bottom: var(--space-5);
-}
-
-.App-title {
-  margin: 0;
-  font-size: var(--step-3);
-  line-height: 1.15;
-}
-
-.App-subtitle {
-  margin: var(--space-1) 0 0;
-  color: var(--text-muted);
-}
-
 .App-main {
   flex: 1;
 }

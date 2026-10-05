@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import Header from '../Header';
 import WeatherList from '../WeatherList';
 import Footer from '../Footer';
 import { fetchCurrentWeather } from '../../api/openWeather';
@@ -32,7 +33,7 @@ function App() {
     controllers.current[city.id] = controller;
 
     setCityEntry(city.id, LOADING_ENTRY);
-    fetchCurrentWeather(city.query, { signal: controller.signal })
+    fetchCurrentWeather(city, { signal: controller.signal })
       .then(data => {
         // A response can still arrive after abort() if it was already on its way. Drop it.
         if (controller.signal.aborted) {
@@ -44,7 +45,12 @@ function App() {
         if (controller.signal.aborted) {
           return;
         }
-        setCityEntry(city.id, { status: STATUS.ERROR, weather: null, error: error.message });
+        // withError only shows the error when the message isn't empty, so always send some text.
+        setCityEntry(city.id, {
+          status: STATUS.ERROR,
+          weather: null,
+          error: error.message || 'Something went wrong.',
+        });
       });
   }, []);
 
@@ -56,10 +62,7 @@ function App() {
 
   return (
     <div className="App">
-      <header className="App-header">
-        <h1 className="App-title">Weather</h1>
-        <p className="App-subtitle">What the weather is like right now in each city</p>
-      </header>
+      <Header title="Weather" subtitle="What the weather is like right now in places I've visited" />
       <main className="App-main">
         <WeatherList cities={CITIES} weatherByCity={weatherByCity} onRetry={loadCity} />
       </main>

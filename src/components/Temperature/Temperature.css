@@ -1,0 +1,12 @@
+.Temperature-value {
+  font-size: var(--step-5);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.Temperature-unit {
+  font-size: var(--step-1);
+  font-weight: 700;
+  color: var(--text-muted);
+  vertical-align: top;
+}
